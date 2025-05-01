@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau de Bord ThermoAlert</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen">
+    <div class="container mx-auto px-6 py-8">
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-extrabold text-blue-500">🔥 Système de Surveillance ThermoAlert</h1>
+            <p class="text-lg text-gray-600">Suivez les tendances de température et recevez des alertes en temps réel</p>
+        </header>
+
+        <!-- Main Content -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Temperature Chart -->
+            <div class="col-span-2 bg-white p-6 rounded-lg shadow-lg flex flex-col">
+                <h2 class="text-xl font-semibold text-gray-700 mb-4">📊 Tendances des Températures</h2>
+                <div class="flex-1 h-48">
+                    <canvas id="temperatureChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Alerts Panel -->
+            <div class="bg-white p-6 rounded-lg shadow-lg">
+                <h2 class="text-xl font-semibold text-red-600 mb-4">🚨 Dernières 10 Alertes</h2>
+                <div class="overflow-y-auto h-48">
+                    <table class="min-w-full text-sm">
+                        <thead>
+                            <tr class="bg-gray-100 text-gray-700">
+                                <th class="px-2 py-1 text-left">Heure</th>
+                                <th class="px-2 py-1 text-left">Capteur</th>
+                                <th class="px-2 py-1 text-left">Type</th>
+                                <th class="px-2 py-1 text-left">Valeur</th>
+                                <th class="px-2 py-1 text-left">Gravité</th>
+                            </tr>
+                        </thead>
+                        <tbody id="alertsContainer" class="divide-y divide-gray-200">
+                            <!-- Alert rows will be dynamically inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+            <div class="bg-blue-100 p-4 rounded-lg shadow">
+                <h3 class="text-lg font-medium text-blue-700">Température Actuelle</h3>
+                <p id="currentTemp" class="text-3xl font-bold text-blue-600">--°C</p>
+            </div>
+            <div class="bg-green-100 p-4 rounded-lg shadow">
+                <h3 class="text-lg font-medium text-green-700">Température Min</h3>
+                <p id="minTemp" class="text-3xl font-bold text-green-600">--°C</p>
+            </div>
+            <div class="bg-red-100 p-4 rounded-lg shadow">
+                <h3 class="text-lg font-medium text-red-700">Température Max</h3>
+                <p id="maxTemp" class="text-3xl font-bold text-red-600">--°C</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration du graphique
+        const chartConfig = {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Température (°C)',
+                    data: [],
+                    borderColor: '#3b82f6',
+                    tension: 0.4,
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                aspectRatio: 2, // Réduction de la taille du graphique
+                scales: {
+                    y: { beginAtZero: false }
+                }
+            }
+        };
+
+        // Initialisation du graphique
+        const chart = new Chart(
+            document.getElementById('temperatureChart').getContext('2d'),
+            chartConfig
+        );
+
+        // Couleurs de gravité
+        const severityColors = {
+            CRITICAL: 'red',
+            HIGH: 'orange',
+            MEDIUM: 'yellow',
+            WINDOWED_ALERT: 'purple',
+            NORMAL: 'green'
+        };
+
+        // Mise à jour du graphique
+        function updateChart(data) {
+            const labels = data.map(d => 
+                new Date(d.timestamp).toLocaleTimeString('fr-FR')
+            );
+            const temps = data.map(d => d.temperature);
+            
+            chart.data.labels = labels;
+            chart.data.datasets[0].data = temps;
+            chart.update();
+        }
+
+        // Mise à jour des statistiques
+        function updateStats(data) {
+            const temps = data.map(d => d.temperature);
+            const current = temps.length ? temps[temps.length-1].toFixed(1) : '--';
+            const min = Math.min(...temps).toFixed(1) || '--';
+            const max = Math.max(...temps).toFixed(1) || '--';
+            
+            document.getElementById('currentTemp').textContent = `${current}°C`;
+            document.getElementById('minTemp').textContent = `${min}°C`;
+            document.getElementById('maxTemp').textContent = `${max}°C`;
+        }
+
+        // Mise à jour des alertes
+        function updateAlerts(alerts) {
+            const container = document.getElementById('alertsContainer');
+            container.innerHTML = alerts.map(alert => `
+                <tr class="hover:bg-${severityColors[alert.severity]}-50">
+                    <td class="px-2 py-1">${new Date(alert.timestamp).toLocaleTimeString('fr-FR')}</td>
+                    <td class="px-2 py-1 font-medium">${alert.sensor_id}</td>
+                    <td class="px-2 py-1 capitalize">${alert.alert_type}</td>
+                    <td class="px-2 py-1 text-${severityColors[alert.severity]}-700">
+                        ${alert.temperature.toFixed(1)}°C
+                    </td>
+                    <td class="px-2 py-1 text-${severityColors[alert.severity]}-700 capitalize">
+                        ${alert.severity.replace(/_/g, ' ')}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Récupération des données
+        async function updateDashboard() {
+            try {
+                const response = await fetch('/data');
+                const {temperature, alerts} = await response.json();
+                const last10Data = temperature.slice(-10);
+                const last10Alerts = alerts.slice(-10);
+
+                updateChart(last10Data);
+                updateStats(last10Data);
+                updateAlerts(last10Alerts);
+            } catch (error) {
+                console.error('Erreur de mise à jour du tableau de bord :', error);
+            }
+        }
+
+        // Chargement initial et mise à jour périodique
+        updateDashboard();
+        setInterval(updateDashboard, 2000);
+    </script>
+</body>
+</html>

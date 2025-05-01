@@ -1,0 +1,67 @@
+docker-compose up -d zookeeper
+Start-Sleep -Seconds 30
+
+docker-compose up -d kafka
+Start-Sleep -Seconds 60
+
+docker-compose up -d hadoop datanode spark
+Start-Sleep -Seconds 60
+
+docker-compose up -d spark-consumer
+Start-Sleep -Seconds 60
+
+docker-compose up -d hdfs-consumer alert-consumer
+Start-Sleep -Seconds 60
+
+docker-compose up -d sensor interface
+
+
+------------------------------------------------------------------------------------
+docker-compose build spark-consumer
+docker-compose up -d spark-consumer 
+docker-compose up -d --force-recreate --no-deps hdfs-consumer
+docker-compose rm -f hdfs-consumer
+docker logs -f tp-kafka-thermoalert-hdfs-consumer-1
+docker-compose down
+docker-compose up --build -d
+docker system prune -a --volumes
+
+###############################################################################   KAFKA    ###########################################################################
+
+kafka-topics --bootstrap-server kafka:9092 --create --topic <TOPIC_NAME> --partitions 3 --replication-factor 1
+
+kafka-topics --bootstrap-server kafka:9092 --list
+
+kafka-topics --bootstrap-server kafka:9092 --describe --topic <TOPIC_NAME>
+
+kafka-topics --bootstrap-server kafka:9092 --alter --topic <TOPIC_NAME> --partitions 5
+
+kafka-configs --bootstrap-server kafka:9092 --entity-type topics --entity-name <TOPIC_NAME> --describe
+
+kafka-configs --bootstrap-server kafka:9092 --entity-type topics --entity-name <TOPIC_NAME> --alter --add-config retention.ms=86400000
+
+kafka-console-consumer --bootstrap-server kafka:9092 --topic <TOPIC_NAME> --from-beginning
+
+kafka-console-producer --bootstrap-server kafka:9092 --topic <TOPIC_NAME>
+
+kafka-consumer-groups --bootstrap-server kafka:9092 --list
+
+kafka-topics --bootstrap-server kafka:9092 --delete --topic <TOPIC_NAME>
+
+kafka-run-class kafka.tools.GetOffsetShell --broker-list kafka:9092 --topic temperature_data --time -1
+
+
+###############################################################################   HDFS    ###########################################################################
+
+hdfs dfs -ls /chemin/du/dossier
+
+hdfs dfs -mkdir /chemin/du/nouveau_dossier
+
+hdfs dfs -put /chemin/local/fichier.txt /chemin/hdfs/cible
+
+hdfs dfs -get /chemin/hdfs/fichier.txt /chemin/local/cible
+
+hdfs dfs -cat /chemin/hdfs/fichier.txt
+
+hdfs dfs -rm /chemin/hdfs/fichier.txt           # Supprime un fichier
+hdfs dfs -rm -r /chemin/hdfs/dossier            # Supprime un dossier récursivement
