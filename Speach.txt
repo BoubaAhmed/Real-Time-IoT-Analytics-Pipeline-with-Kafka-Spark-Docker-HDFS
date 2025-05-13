@@ -1,0 +1,71 @@
+**Slide 1 : Page de Titre**  
+*Texte à dire :*  
+"Bonjour à tous et bienvenue à cette présentation. Aujourd’hui, je vais vous présenter notre projet intitulé **Surveillance de Température en Temps Réel avec Big Data**, développé sous le nom **ThermoAlert**. Ce travail a été réalisé par moi-même, Bouba Ahmed, sous la supervision du Professeur Younes Hajoui, dans le cadre de l’année universitaire 2024-2025. L’objectif principal est de répondre à des enjeux critiques de surveillance industrielle grâce aux outils Big Data. Commençons sans plus tarder !"
+
+
+**Slide 2 : Introduction et Objectifs**  
+*Texte à dire :*  
+"Dans un monde où les données sont générées à la vitesse de l’éclair, le traitement en temps réel est devenu incontournable, que ce soit dans l’IoT, la finance, ou la logistique. Notre problématique centrale est : **comment surveiller des capteurs de température en temps réel avec des outils Big Data, et comment générer des alertes critiques pour une réaction immédiate ?**  
+
+Pour y répondre, nos objectifs sont clairs :  
+1. Simuler des capteurs via Python.  
+2. Transporter les données avec Kafka.  
+3. Analyser les flux avec Spark Streaming.  
+4. Générer des alertes si la température dépasse 80°C.  
+5. Stocker les données dans HDFS.  
+6. Visualiser les résultats via une interface web avec Flask.  
+
+C’est un projet complet, allant de la génération de données jusqu’à l’affichage en temps réel."
+
+---
+
+**Slide 3 : Architecture Globale**  
+*Texte à dire :*  
+"Voici l’architecture de notre solution. Elle repose sur 5 piliers :  
+- **Un producteur Python** qui génère des données de température chaque seconde.  
+- **Kafka**, le bus de messages, qui gère deux topics : un pour les données brutes, un autre pour les alertes.  
+- **Spark Streaming** pour le traitement en temps réel, comme le calcul de moyennes glissantes ou la détection d’anomalies.  
+- **HDFS** pour le stockage durable des données.  
+- **Flask**, notre interface web qui affiche les alertes et les tendances.  
+
+Tous ces services sont orchestrés via **Docker**, ce qui garantit isolation et simplicité de déploiement."
+
+---
+
+**Slide 3 : Fonctionnement Clé**  
+*Texte à dire :*  
+"Zoomons sur le fonctionnement technique :  
+- **Kafka** joue un rôle central avec ses deux topics. Les données brutes sont traitées en temps réel, et les alertes sont envoyées dans un canal dédié.  
+- **Spark Streaming** utilise des micro-lots et des *watermarks* pour gérer les données en retard, une fonctionnalité cruciale pour éviter les fausses alertes.  
+- **Docker** permet d’exécuter 6 services simultanément, comme Zookeeper, Kafka, ou Spark, sans conflits.  
+
+Les avantages ? Une architecture **scalable** : ajouter des capteurs ou des nœuds Spark est simple. Et surtout, tout est isolé, ce qui facilite la maintenance."
+
+---
+
+**Slide 4 : Étapes du Pipeline**  
+*Texte à dire :*  
+"Notre pipeline se décompose en 4 étapes :  
+1. **Génération** : Le simulateur Python envoie des données toutes les secondes à Kafka. Par exemple : température, ID du capteur, horodatage.  
+2. **Traitement** : Spark lit ces données, classe les températures en *CRITIQUE* (>90°C), *ÉLEVÉE* (>80°C), ou *NORMALE*, et calcule des moyennes glissantes toutes les 5 minutes.  
+3. **Stockage** : Les résultats sont sauvegardés dans HDFS, organisés en dossiers comme */temperature_data* ou */alerts*.  
+4. **Visualisation** : Enfin, Flask affiche les alertes en direct et un tableau de bord interactif avec Chart.js."
+
+---
+
+**Slide 5 : Résultats et Performances**  
+*Texte à dire :*  
+"Passons aux résultats. En environnement local, nous avons testé :  
+- Un **débit** de 1 000 messages/seconde, avec des pics à 1 500.  
+- Une **latence** de 500 ms seulement entre la génération des données et leur affichage.  
+- Une **résilience** totale : aucune perte de données même sous charge.  
+
+Voici un exemple d’alerte critique *(pointer vers le JSON)* : 85,2°C détecté sur le capteur 05. L’interface Flask affiche ces alertes en temps réel, avec un graphique des moyennes horaires et une liste des 10 dernières mesures. C’est à la fois réactif et intuitif."
+
+---
+
+**Slide 6 : Conclusion**  
+*Texte à dire :*  
+"Pour conclure, **ThermoAlert** démontre qu’il est possible de surveiller des températures en temps réel avec des outils Big Data open-source. Les avantages sont nombreux : rapidité, scalabilité, et résilience.  
+
+Je vous remercie pour votre attention. C’était un plaisir de partager ce projet avec vous. Je suis maintenant ouvert à vos questions et retours !"
