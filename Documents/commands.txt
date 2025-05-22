@@ -18,7 +18,7 @@ docker-compose up -d sensor interface
 
 ------------------------------------------------------------------------------------
 docker-compose build spark-consumer
-docker-compose up -d spark-consumer 
+docker-compose up -d spark-consumer
 docker-compose up -d --force-recreate --no-deps hdfs-consumer
 docker-compose rm -f hdfs-consumer
 docker logs -f tp-kafka-thermoalert-hdfs-consumer-1
